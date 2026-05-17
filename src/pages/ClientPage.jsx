@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { ShoppingBag, Package, ClipboardList, LogIn, LogOut, ExternalLink, Loader2, CheckCircle, User } from 'lucide-react'
 import { useClientStore } from '../stores/clientStore'
 
@@ -19,6 +19,20 @@ function TabBtn({ label, tab, icon: Icon, active, onClick }) {
   )
 }
 
+function CatalogImage({ src, alt }) {
+  const [errored, setErrored] = useState(false)
+  if (!src || errored) {
+    return <div className="w-full h-40 bg-lavender rounded-xl flex items-center justify-center mb-3"><Package size={32} className="text-c-border" /></div>
+  }
+  return (
+    <a href={src} target="_blank" rel="noopener noreferrer" className="block mb-3">
+      <div className="w-full h-40 bg-lavender rounded-xl flex items-center justify-center overflow-hidden">
+        <img src={src} alt={alt} className="object-cover w-full h-full rounded-xl" onError={() => setErrored(true)} />
+      </div>
+    </a>
+  )
+}
+
 // ── Catalog tab ───────────────────────────────────────────────
 function CatalogTab() {
   const { sheets, loading, prefillFromCatalog } = useClientStore()
@@ -31,18 +45,10 @@ function CatalogTab() {
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
       {catalog.map((item, i) => (
         <div key={i} className="bg-white rounded-2xl border border-c-border p-4 shadow-sm hover:shadow-md transition-shadow">
-          {(() => {
-            const firstUrl = (item.URL_FOTOS || '').split(',').map((s) => s.trim()).find(Boolean)
-            return firstUrl ? (
-              <a href={firstUrl} target="_blank" rel="noopener noreferrer" className="block mb-3">
-                <div className="w-full h-40 bg-lavender rounded-xl flex items-center justify-center overflow-hidden">
-                  <img src={firstUrl} alt={item.NOME} className="object-cover w-full h-full rounded-xl" onError={(e) => { e.target.style.display = 'none' }} />
-                </div>
-              </a>
-            ) : (
-              <div className="w-full h-40 bg-lavender rounded-xl flex items-center justify-center mb-3"><Package size={32} className="text-c-border" /></div>
-            )
-          })()}
+          <CatalogImage
+            src={(item.URL_FOTOS || '').split(',').map((s) => s.trim()).find(Boolean)}
+            alt={item.NOME}
+          />
           <h3 className="font-bold text-dark text-sm">{item.NOME}</h3>
           <p className="text-primary text-xs mt-0.5">{item.DESCRICAO}</p>
           <button
@@ -138,8 +144,8 @@ function OrderTab() {
 
         <button
           onClick={s.submitRequest}
-          disabled={s.formLoading}
-          className="w-full bg-dark text-white font-bold py-2.5 rounded-xl hover:bg-primary transition-colors flex items-center justify-center gap-2"
+          disabled={s.formLoading || (!s.customPieceMode && !s.pieceIsUniqueSize && !!s.selectedPeca && !s.selectedTamanho)}
+          className="w-full bg-dark text-white font-bold py-2.5 rounded-xl hover:bg-primary transition-colors flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {s.formLoading ? <><Loader2 size={16} className="animate-spin" /> A enviar...</> : 'Enviar Pedido'}
         </button>

@@ -83,6 +83,7 @@ export const useOwnerStore = create((set, get) => ({
   clientMedidas: {},
   medidasMsg: '',
   medidasLoading: false,
+  medidasSaving: false,
   medidasBusto: '',
   medidasCintura: '',
   medidasQuadril: '',
@@ -424,8 +425,8 @@ export const useOwnerStore = create((set, get) => ({
 
   saveMedidas: async () => {
     const s = get()
-    if (!s.expandedClientPhone || s.medidasLoading) return
-    set({ medidasLoading: true, medidasMsg: '' })
+    if (!s.expandedClientPhone || s.medidasSaving) return
+    set({ medidasSaving: true, medidasMsg: '' })
     try {
       await api.saveMedidas({
         telefone: s.expandedClientPhone,
@@ -436,9 +437,9 @@ export const useOwnerStore = create((set, get) => ({
         ombro: s.medidasOmbro,
         manga: s.medidasManga,
       })
-      set({ medidasLoading: false, medidasMsg: '✅ Medidas guardadas.' })
+      set({ medidasSaving: false, medidasMsg: '✅ Medidas guardadas.' })
     } catch (err) {
-      set({ medidasLoading: false, medidasMsg: err.message })
+      set({ medidasSaving: false, medidasMsg: err.message })
     }
   },
 

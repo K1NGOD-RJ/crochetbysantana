@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Clock, ClipboardList, Package, Users, Table2, LogOut, Loader2,
@@ -22,7 +22,14 @@ function TabBtn({ label, tab, icon: Icon, active, onClick }) {
 }
 
 function MsgBox({ msg }) {
-  if (!msg) return null
+  const [visible, setVisible] = useState(true)
+  useEffect(() => {
+    if (!msg) return
+    setVisible(true)
+    const t = setTimeout(() => setVisible(false), 5000)
+    return () => clearTimeout(t)
+  }, [msg])
+  if (!msg || !visible) return null
   const isOk = msg.startsWith('✅')
   return (
     <div className={`flex items-center gap-2 rounded-xl p-3 mt-3 text-sm ${isOk ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
@@ -144,10 +151,10 @@ function PendentesTab() {
           <MsgBox msg={s.approvalMessage} />
 
           <div className="flex gap-2 mt-4 flex-wrap">
-            <button onClick={s.approveRequest} className="flex items-center gap-1.5 bg-green-600 text-white font-bold px-5 py-2 rounded-xl hover:bg-green-700 text-sm">
-              <CheckCircle size={14} /> Aprovar
+            <button onClick={s.approveRequest} disabled={s.approvalLoading} className="flex items-center gap-1.5 bg-green-600 text-white font-bold px-5 py-2 rounded-xl hover:bg-green-700 text-sm disabled:opacity-60 disabled:cursor-not-allowed">
+              {s.approvalLoading ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />} Aprovar
             </button>
-            <button onClick={s.rejectRequest} className="flex items-center gap-1.5 bg-red-500 text-white font-bold px-5 py-2 rounded-xl hover:bg-red-600 text-sm">
+            <button onClick={s.rejectRequest} disabled={s.approvalLoading} className="flex items-center gap-1.5 bg-red-500 text-white font-bold px-5 py-2 rounded-xl hover:bg-red-600 text-sm disabled:opacity-60 disabled:cursor-not-allowed">
               <XCircle size={14} /> Rejeitar
             </button>
             {s.whatsappUrl && (
@@ -415,7 +422,7 @@ function NewPecaForm() {
         {(s.npIsUniqueSize ? ['TU'] : SIZES).map((sz) => (
           <div key={sz}>
             <label className="text-xs font-semibold text-dark block mb-1">{sz} — Horas</label>
-            <input className={INPUT} type="number" step="0.1" value={s.npHoras[sz] || ''} onChange={(e) => useOwnerStore.setState({ npHoras: { ...s.npHoras, [sz]: e.target.value } })} />
+            <input className={INPUT} type="number" min="0" step="0.1" value={s.npHoras[sz] || ''} onChange={(e) => useOwnerStore.setState({ npHoras: { ...s.npHoras, [sz]: e.target.value } })} />
           </div>
         ))}
       </div>
@@ -423,13 +430,13 @@ function NewPecaForm() {
         {(s.npIsUniqueSize ? ['TU'] : SIZES).map((sz) => (
           <div key={sz}>
             <label className="text-xs font-semibold text-dark block mb-1">{sz} — Consumo</label>
-            <input className={INPUT} type="number" step="0.1" value={s.npConsumo[sz] || ''} onChange={(e) => useOwnerStore.setState({ npConsumo: { ...s.npConsumo, [sz]: e.target.value } })} />
+            <input className={INPUT} type="number" min="0" step="0.1" value={s.npConsumo[sz] || ''} onChange={(e) => useOwnerStore.setState({ npConsumo: { ...s.npConsumo, [sz]: e.target.value } })} />
           </div>
         ))}
       </div>
 
-      <button onClick={s.registerPiece} className="bg-primary text-white font-bold px-6 py-2.5 rounded-xl hover:bg-dark transition-colors flex items-center gap-1.5">
-        <Plus size={14} /> Cadastrar Peça
+      <button onClick={s.registerPiece} disabled={s.npLoading} className="bg-primary text-white font-bold px-6 py-2.5 rounded-xl hover:bg-dark transition-colors flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed">
+        {s.npLoading ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} Cadastrar Peça
       </button>
       <MsgBox msg={s.npMessage} />
     </div>
@@ -525,9 +532,9 @@ function EstoqueTab() {
                   <option value="">Selecione...</option>{(coresMap[s.compraLinha] || []).map((c) => <option key={c} value={c}>{c}</option>)}
                 </select></div>
               <div className="w-24"><label className="text-xs font-semibold text-dark block mb-1">Qtd *</label>
-                <input className={INPUT} type="number" value={s.compraQtd} onChange={(e) => useOwnerStore.setState({ compraQtd: e.target.value })} /></div>
+                <input className={INPUT} type="number" min="0" step="0.01" value={s.compraQtd} onChange={(e) => useOwnerStore.setState({ compraQtd: e.target.value })} /></div>
               <div className="w-28"><label className="text-xs font-semibold text-dark block mb-1">Custo/un</label>
-                <input className={INPUT} type="number" value={s.compraCustoUnit} onChange={(e) => useOwnerStore.setState({ compraCustoUnit: e.target.value })} /></div>
+                <input className={INPUT} type="number" min="0" step="0.01" value={s.compraCustoUnit} onChange={(e) => useOwnerStore.setState({ compraCustoUnit: e.target.value })} /></div>
               <div className="flex-1 min-w-32"><label className="text-xs font-semibold text-dark block mb-1">Fornecedor</label>
                 <input className={INPUT} value={s.compraFornecedor} onChange={(e) => useOwnerStore.setState({ compraFornecedor: e.target.value })} /></div>
               <button onClick={s.addCompra} className="bg-primary text-white font-bold px-5 py-2 rounded-xl hover:bg-dark text-sm flex items-center gap-1.5 self-end"><Plus size={14} />Adicionar</button>
@@ -571,7 +578,7 @@ function EstoqueTab() {
                   <option value="">Selecione...</option>{(coresMap[s.consumoRegLinha] || []).map((c) => <option key={c} value={c}>{c}</option>)}
                 </select></div>
               <div className="w-24"><label className="text-xs font-semibold text-dark block mb-1">Qtd *</label>
-                <input className={INPUT} type="number" value={s.consumoRegQtd} onChange={(e) => useOwnerStore.setState({ consumoRegQtd: e.target.value })} /></div>
+                <input className={INPUT} type="number" min="0" step="0.01" value={s.consumoRegQtd} onChange={(e) => useOwnerStore.setState({ consumoRegQtd: e.target.value })} /></div>
               <div className="flex-1 min-w-32"><label className="text-xs font-semibold text-dark block mb-1">Pedido Ref</label>
                 <input className={INPUT} value={s.consumoRegPedidoRef} onChange={(e) => useOwnerStore.setState({ consumoRegPedidoRef: e.target.value })} /></div>
               <button onClick={s.addConsumoRegistro} className="bg-primary text-white font-bold px-5 py-2 rounded-xl hover:bg-dark text-sm flex items-center gap-1.5 self-end"><Plus size={14} />Adicionar</button>
@@ -605,13 +612,13 @@ function MedidasPanel() {
         {fields.map(({ key, label }) => (
           <div key={key}>
             <label className="text-xs font-semibold text-dark block mb-1">{label}</label>
-            <input className={INPUT} type="number" step="0.1" value={s[key]}
+            <input className={INPUT} type="number" min="0" step="0.1" value={s[key]}
               onChange={(e) => useOwnerStore.setState({ [key]: e.target.value })} placeholder="—" />
           </div>
         ))}
       </div>
-      <button onClick={s.saveMedidas} className="bg-primary text-white font-bold px-5 py-2 rounded-xl hover:bg-dark text-sm">
-        Guardar medidas
+      <button onClick={s.saveMedidas} disabled={s.medidasSaving} className="bg-primary text-white font-bold px-5 py-2 rounded-xl hover:bg-dark text-sm flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed">
+        {s.medidasSaving ? <Loader2 size={14} className="animate-spin" /> : null} Guardar medidas
       </button>
       <MsgBox msg={s.medidasMsg} />
     </div>
