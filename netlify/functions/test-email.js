@@ -12,7 +12,7 @@ export const handler = async (event) => {
     const resend = new Resend(apiKey)
     const result = await resend.emails.send({
       from: 'CrochetbySantana <onboarding@resend.dev>',
-      to: 'crochetbyssantana@gmail.com',
+      to: 'eidaniisantana@gmail.com',
       subject: 'Teste de email — CrochetbySantana',
       html: '<h2>Hello World!</h2><p>O sistema de notificações está a funcionar.</p>',
     })
