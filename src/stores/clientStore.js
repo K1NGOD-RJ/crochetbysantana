@@ -172,6 +172,8 @@ export const useClientStore = create((set, get) => ({
     try {
       const { orders } = await api.getClientOrders(phone)
       set({ orderHistory: orders })
-    } catch {}
+    } catch (err) {
+      console.error('loadClientHistory failed:', err.message)
+    }
   },
 }))

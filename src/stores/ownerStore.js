@@ -11,6 +11,7 @@ export const useOwnerStore = create((set, get) => ({
 
   // ── Sheets (base data) ────────────────────────────────────
   sheets: null,
+  sheetsError: '',
 
   // ── Pending ───────────────────────────────────────────────
   pendingData: [],
@@ -21,6 +22,7 @@ export const useOwnerStore = create((set, get) => ({
   estimatedProfit: '',
   approvalPrazo: '',
   approvalMessage: '',
+  approvalLoading: false,
   isCustomPiece: false,
   approvalLinha: '',
   approvalRolos: '',
@@ -96,6 +98,7 @@ export const useOwnerStore = create((set, get) => ({
   npHoras: { PP: '', P: '', M: '', G: '', GG: '' },
   npConsumo: { PP: '', P: '', M: '', G: '', GG: '' },
   npMessage: '',
+  npLoading: false,
 
   // ── Actions ───────────────────────────────────────────────
   setIsAuthenticated: (v) => set({ isAuthenticated: v }),
@@ -104,8 +107,10 @@ export const useOwnerStore = create((set, get) => ({
   loadSheets: async () => {
     try {
       const data = await api.getSheets()
-      set({ sheets: data })
-    } catch {}
+      set({ sheets: data, sheetsError: '' })
+    } catch (err) {
+      set({ sheetsError: err.message })
+    }
   },
 
   // ── Pending ───────────────────────────────────────────────
@@ -158,6 +163,7 @@ export const useOwnerStore = create((set, get) => ({
 
   approveRequest: async () => {
     const s = get()
+    if (s.approvalLoading) return
     const { selectedPendingId, precoVendaInput, approvalPrazo, isCustomPiece,
             approvalLinha, approvalRolos, approvalCustoMat, approvalCustoMO } = s
     if (!precoVendaInput || !approvalPrazo) {
@@ -168,6 +174,7 @@ export const useOwnerStore = create((set, get) => ({
       set({ approvalMessage: 'Preço de venda inválido.' })
       return
     }
+    set({ approvalLoading: true, approvalMessage: '' })
     try {
       const payload = {
         id: selectedPendingId,
@@ -182,21 +189,24 @@ export const useOwnerStore = create((set, get) => ({
       }
       const { telefone } = await api.approveRequest(payload)
       const waUrl = `https://wa.me/55${telefone.replace(/\D/g, '')}?text=${encodeURIComponent(`Olá! O seu pedido #${selectedPendingId} foi aprovado. Prazo: ${approvalPrazo}. Preço: R$ ${precoVendaInput}`)}`
-      set({ approvalMessage: '✅ Pedido aprovado!', selectedPendingId: '', selectedPendingRecord: null, whatsappUrl: waUrl })
+      set({ approvalLoading: false, approvalMessage: '✅ Pedido aprovado!', selectedPendingId: '', selectedPendingRecord: null, whatsappUrl: waUrl })
       get().loadPending()
     } catch (err) {
-      set({ approvalMessage: err.message })
+      set({ approvalLoading: false, approvalMessage: err.message })
     }
   },
 
   rejectRequest: async () => {
-    const { selectedPendingId } = get()
+    const s = get()
+    if (s.approvalLoading) return
+    const { selectedPendingId } = s
+    set({ approvalLoading: true, approvalMessage: '' })
     try {
       await api.rejectRequest(selectedPendingId)
-      set({ approvalMessage: '❌ Pedido rejeitado.', selectedPendingId: '', selectedPendingRecord: null })
+      set({ approvalLoading: false, approvalMessage: '❌ Pedido rejeitado.', selectedPendingId: '', selectedPendingRecord: null })
       get().loadPending()
     } catch (err) {
-      set({ approvalMessage: err.message })
+      set({ approvalLoading: false, approvalMessage: err.message })
     }
   },
 
@@ -205,6 +215,7 @@ export const useOwnerStore = create((set, get) => ({
     set({ ordersLoading: true })
     try {
       const { orders } = await api.getOrders()
+      // Clients tab only shows clients who have at least one approved order — by design.
       const clients = {}
       orders.forEach((o) => {
         if (o.TELEFONE) clients[o.TELEFONE] = clients[o.TELEFONE] || { NOME: o.CLIENTE, TELEFONE: o.TELEFONE, TOTAL_PEDIDOS: 0, TOTAL_GASTO: 0 }
@@ -412,33 +423,35 @@ export const useOwnerStore = create((set, get) => ({
   },
 
   saveMedidas: async () => {
-    const { expandedClientPhone, medidasBusto, medidasCintura, medidasQuadril,
-            medidasComprimento, medidasOmbro, medidasManga } = get()
-    if (!expandedClientPhone) return
+    const s = get()
+    if (!s.expandedClientPhone || s.medidasLoading) return
+    set({ medidasLoading: true, medidasMsg: '' })
     try {
       await api.saveMedidas({
-        telefone: expandedClientPhone,
-        busto: medidasBusto,
-        cintura: medidasCintura,
-        quadril: medidasQuadril,
-        comprimento: medidasComprimento,
-        ombro: medidasOmbro,
-        manga: medidasManga,
+        telefone: s.expandedClientPhone,
+        busto: s.medidasBusto,
+        cintura: s.medidasCintura,
+        quadril: s.medidasQuadril,
+        comprimento: s.medidasComprimento,
+        ombro: s.medidasOmbro,
+        manga: s.medidasManga,
       })
-      set({ medidasMsg: '✅ Medidas guardadas.' })
+      set({ medidasLoading: false, medidasMsg: '✅ Medidas guardadas.' })
     } catch (err) {
-      set({ medidasMsg: err.message })
+      set({ medidasLoading: false, medidasMsg: err.message })
     }
   },
 
   // ── New piece ─────────────────────────────────────────────
   registerPiece: async () => {
     const s = get()
+    if (s.npLoading) return
     if (!s.npNome.trim() || !s.npLinha.trim()) { set({ npMessage: 'Nome e linha são obrigatórios.' }); return }
+    set({ npLoading: true, npMessage: '' })
     try {
       await api.registerPiece({ nome: s.npNome, linha: s.npLinha, obs: s.npObs, is_unique_size: s.npIsUniqueSize, horas: s.npHoras, consumo: s.npConsumo })
-      set({ npNome: '', npLinha: '', npObs: '', npIsUniqueSize: false, npHoras: { PP: '', P: '', M: '', G: '', GG: '' }, npConsumo: { PP: '', P: '', M: '', G: '', GG: '' }, npMessage: '✅ Peça registada com sucesso.' })
+      set({ npLoading: false, npNome: '', npLinha: '', npObs: '', npIsUniqueSize: false, npHoras: { PP: '', P: '', M: '', G: '', GG: '' }, npConsumo: { PP: '', P: '', M: '', G: '', GG: '' }, npMessage: '✅ Peça registada com sucesso.' })
       get().loadSheets()
-    } catch (err) { set({ npMessage: err.message }) }
+    } catch (err) { set({ npLoading: false, npMessage: err.message }) }
   },
 }))
