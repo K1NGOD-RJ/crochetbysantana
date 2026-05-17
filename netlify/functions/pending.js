@@ -92,6 +92,8 @@ export const handler = async (event) => {
 
   // ── POST submit ──────────────────────────────────────────────
   if (body.action === 'submit') {
+    if (!body.CLIENTE?.trim()) return json(400, { error: 'Nome do cliente é obrigatório.' })
+    if (!body.TELEFONE?.trim()) return json(400, { error: 'Telefone é obrigatório.' })
     try {
       const res = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: PENDENTES_RANGE })
       const existing = toObjects(res.data.values)

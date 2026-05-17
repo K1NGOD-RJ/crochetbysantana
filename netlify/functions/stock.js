@@ -7,7 +7,7 @@
  *
  * Replaces stock.py
  */
-import { getSheetsClient, SHEET_ID, json, toObjects } from './_sheets.js'
+import { getSheetsClient, SHEET_ID, json, toObjects, isOwner } from './_sheets.js'
 
 const COMPRAS_RANGE = 'COMPRAS!A:Z'
 const CONSUMO_RANGE = 'CONSUMO_REGISTRO!A:Z'
@@ -68,6 +68,7 @@ export const handler = async (event) => {
 
   // ── POST ─────────────────────────────────────────────────────
   if (event.httpMethod === 'POST') {
+    if (!isOwner(event)) return json(401, { error: 'Não autorizado.' })
     let body
     try { body = JSON.parse(event.body) } catch { return json(400, { error: 'Invalid JSON' }) }
 
@@ -100,7 +101,7 @@ export const handler = async (event) => {
         const res = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: CONSUMO_RANGE })
         const existing = toObjects(res.data.values)
         const id = nextId(existing, 'U')
-        const row = [id, now(), body.LINHA, body.COR, body.QUANTIDADE, body.PEDIDO_REF || '', body.NOTAS || '']
+        const row = [id, now(), body.LINHA, body.COR, parseFloat(body.QUANTIDADE || 0), body.PEDIDO_REF || '', body.NOTAS || '']
         if (!res.data.values || res.data.values.length === 0) {
           await sheets.spreadsheets.values.update({
             spreadsheetId: SHEET_ID, range: CONSUMO_RANGE,
@@ -122,9 +123,11 @@ export const handler = async (event) => {
 
   // ── DELETE ───────────────────────────────────────────────────
   if (event.httpMethod === 'DELETE') {
+    if (!isOwner(event)) return json(401, { error: 'Não autorizado.' })
     let body
     try { body = JSON.parse(event.body) } catch { return json(400, { error: 'Invalid JSON' }) }
     const { table, id } = body
+    if (table !== 'compras' && table !== 'consumo') return json(400, { error: "table deve ser 'compras' ou 'consumo'." })
     const range = table === 'compras' ? COMPRAS_RANGE : CONSUMO_RANGE
     const sheetTitle = table === 'compras' ? 'COMPRAS' : 'CONSUMO_REGISTRO'
     try {

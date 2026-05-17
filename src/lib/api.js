@@ -59,31 +59,31 @@ export const deleteOrder = (id) =>
 export const getTable = (table) => call(`/tables?table=${table}`)
 
 export const addTableRow = (table, fields) =>
-  call(`/tables?table=${table}`, 'POST', fields)
+  call(`/tables?table=${table}`, 'POST', fields, ownerHeaders())
 
 export const editTableRow = (table, _idx, fields) =>
-  call(`/tables?table=${table}`, 'PUT', { _idx, ...fields })
+  call(`/tables?table=${table}`, 'PUT', { _idx, ...fields }, ownerHeaders())
 
 export const deleteTableRow = (table, _idx) =>
-  call(`/tables?table=${table}`, 'DELETE', { _idx })
+  call(`/tables?table=${table}`, 'DELETE', { _idx }, ownerHeaders())
 
 // ── Stock ─────────────────────────────────────────────────────
 export const getStock = () => call('/stock')
 
 export const addCompra = (data) =>
-  call('/stock', 'POST', { action: 'compra', ...data })
+  call('/stock', 'POST', { action: 'compra', ...data }, ownerHeaders())
 
 export const addConsumo = (data) =>
-  call('/stock', 'POST', { action: 'consumo', ...data })
+  call('/stock', 'POST', { action: 'consumo', ...data }, ownerHeaders())
 
 export const deleteStockRecord = (table, id) =>
-  call('/stock', 'DELETE', { table, id })
+  call('/stock', 'DELETE', { table, id }, ownerHeaders())
 
 // ── Pieces ────────────────────────────────────────────────────
-export const registerPiece = (data) => call('/pieces', 'POST', data)
+export const registerPiece = (data) => call('/pieces', 'POST', data, ownerHeaders())
 
 // ── Medidas (client measurements) ────────────────────────────
 export const getMedidas = (telefone) =>
-  call(`/medidas?telefone=${encodeURIComponent(telefone)}`)
+  call(`/medidas?telefone=${encodeURIComponent(telefone)}`, 'GET', null, ownerHeaders())
 
-export const saveMedidas = (data) => call('/medidas', 'POST', data)
+export const saveMedidas = (data) => call('/medidas', 'POST', data, ownerHeaders())

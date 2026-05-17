@@ -12,13 +12,14 @@
  *   consumo: { PP, P, M, G, GG } | { TU },
  * }
  */
-import { getSheetsClient, SHEET_ID, json } from './_sheets.js'
+import { getSheetsClient, SHEET_ID, json, isOwner } from './_sheets.js'
 
 const SIZES = ['PP', 'P', 'M', 'G', 'GG']
 
 export const handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return json(200, {})
   if (event.httpMethod !== 'POST') return json(405, { error: 'Method not allowed' })
+  if (!isOwner(event)) return json(401, { error: 'Não autorizado.' })
 
   let body
   try { body = JSON.parse(event.body) } catch { return json(400, { error: 'Invalid JSON' }) }
@@ -40,14 +41,20 @@ export const handler = async (event) => {
     })
 
     // ── DB_HORAS rows (one per size) ─────────────────────────
-    const horasRows = sizeList.map((sz) => [nome.trim(), sz, parseFloat(horas[sz] || 0)])
+    const horasRows = sizeList.map((sz) => {
+      const v = parseFloat(horas[sz])
+      return [nome.trim(), sz, isNaN(v) ? 0 : v]
+    })
     await sheets.spreadsheets.values.append({
       spreadsheetId: SHEET_ID, range: 'DB_HORAS!A:C',
       valueInputOption: 'RAW', requestBody: { values: horasRows },
     })
 
     // ── DB_CONSUMO rows (one per size) ───────────────────────
-    const consumoRows = sizeList.map((sz) => [nome.trim(), sz, parseFloat(consumo[sz] || 0)])
+    const consumoRows = sizeList.map((sz) => {
+      const v = parseFloat(consumo[sz])
+      return [nome.trim(), sz, isNaN(v) ? 0 : v]
+    })
     await sheets.spreadsheets.values.append({
       spreadsheetId: SHEET_ID, range: 'DB_CONSUMO!A:C',
       valueInputOption: 'RAW', requestBody: { values: consumoRows },

@@ -4,7 +4,7 @@
  * POST { telefone, busto, cintura, quadril, comprimento, ombro, manga }
  *       → upsert: update existing row or append new one
  */
-import { getSheetsClient, SHEET_ID, json, toObjects } from './_sheets.js'
+import { getSheetsClient, SHEET_ID, json, toObjects, isOwner } from './_sheets.js'
 
 const RANGE = 'MEDIDAS_CLIENTES!A:G'
 const HEADERS = ['TELEFONE', 'BUSTO', 'CINTURA', 'QUADRIL', 'COMPRIMENTO', 'OMBRO', 'MANGA']
@@ -19,6 +19,7 @@ export const handler = async (event) => {
 
   // ── GET: fetch measurements for a phone ──────────────────────
   if (event.httpMethod === 'GET') {
+    if (!isOwner(event)) return json(401, { error: 'Não autorizado.' })
     const telefone = normalizePhone(event.queryStringParameters?.telefone)
     if (!telefone) return json(400, { error: 'Telefone é obrigatório.' })
     try {
@@ -33,6 +34,7 @@ export const handler = async (event) => {
 
   // ── POST: upsert measurements ─────────────────────────────────
   if (event.httpMethod === 'POST') {
+    if (!isOwner(event)) return json(401, { error: 'Não autorizado.' })
     let body
     try { body = JSON.parse(event.body) } catch { return json(400, { error: 'Invalid JSON' }) }
 

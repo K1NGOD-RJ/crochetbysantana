@@ -7,7 +7,7 @@
  *
  * Replaces catalog.py + edit_sheets.py (linhas/cores)
  */
-import { getSheetsClient, SHEET_ID, json, toObjects, fromObjects } from './_sheets.js'
+import { getSheetsClient, SHEET_ID, json, toObjects, fromObjects, isOwner } from './_sheets.js'
 
 const TABLE_MAP = {
   catalogo: 'DB_CATALOGO',
@@ -37,6 +37,7 @@ export const handler = async (event) => {
 
   // ── POST: add row ────────────────────────────────────────────
   if (event.httpMethod === 'POST') {
+    if (!isOwner(event)) return json(401, { error: 'Não autorizado.' })
     let body
     try { body = JSON.parse(event.body) } catch { return json(400, { error: 'Invalid JSON' }) }
     try {
@@ -81,15 +82,18 @@ export const handler = async (event) => {
 
   // ── PUT: edit row ────────────────────────────────────────────
   if (event.httpMethod === 'PUT') {
+    if (!isOwner(event)) return json(401, { error: 'Não autorizado.' })
     let body
     try { body = JSON.parse(event.body) } catch { return json(400, { error: 'Invalid JSON' }) }
     const { _idx, ...fields } = body
+    const parsedIdx = parseInt(_idx, 10)
+    if (isNaN(parsedIdx) || parsedIdx < 0) return json(400, { error: '_idx deve ser um inteiro não negativo.' })
     try {
       const res = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range })
       const values = res.data.values || []
       if (!values.length) return json(404, { error: 'Sheet empty.' })
       const headers = values[0]
-      const dataRowIdx = parseInt(_idx, 10) + 1 // +1 for header, 0-based in values array
+      const dataRowIdx = parsedIdx + 1 // +1 for header, 0-based in values array
       if (dataRowIdx >= values.length) return json(404, { error: 'Row not found.' })
       const updatedRow = headers.map((h) => (h in fields ? fields[h] : values[dataRowIdx][headers.indexOf(h)] ?? ''))
       const sheetRowNum = dataRowIdx + 1 // 1-based for Sheets API
@@ -107,13 +111,16 @@ export const handler = async (event) => {
 
   // ── DELETE: remove row ───────────────────────────────────────
   if (event.httpMethod === 'DELETE') {
+    if (!isOwner(event)) return json(401, { error: 'Não autorizado.' })
     let body
     try { body = JSON.parse(event.body) } catch { return json(400, { error: 'Invalid JSON' }) }
     const { _idx } = body
+    const parsedIdx = parseInt(_idx, 10)
+    if (isNaN(parsedIdx) || parsedIdx < 0) return json(400, { error: '_idx deve ser um inteiro não negativo.' })
     try {
       const ssRes = await sheets.spreadsheets.get({ spreadsheetId: SHEET_ID })
       const sheet = ssRes.data.sheets.find((s) => s.properties.title === sheetName)
-      const dataRowIdx = parseInt(_idx, 10) + 1 // +1 for header (0-based)
+      const dataRowIdx = parsedIdx + 1 // +1 for header (0-based)
       await sheets.spreadsheets.batchUpdate({
         spreadsheetId: SHEET_ID,
         requestBody: {
