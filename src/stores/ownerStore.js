@@ -164,6 +164,10 @@ export const useOwnerStore = create((set, get) => ({
       set({ approvalMessage: 'Preencha o preço de venda e o prazo.' })
       return
     }
+    if (isNaN(parseFloat(precoVendaInput))) {
+      set({ approvalMessage: 'Preço de venda inválido.' })
+      return
+    }
     try {
       const payload = {
         id: selectedPendingId,

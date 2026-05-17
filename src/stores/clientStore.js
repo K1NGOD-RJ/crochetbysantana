@@ -89,6 +89,10 @@ export const useClientStore = create((set, get) => ({
       set({ formError: 'Preencha todos os campos obrigatórios.' })
       return
     }
+    if (!customPieceMode && !s.pieceIsUniqueSize && !selectedTamanho) {
+      set({ formError: 'Selecione um tamanho.' })
+      return
+    }
 
     set({ formLoading: true, formError: '' })
     try {
@@ -99,7 +103,9 @@ export const useClientStore = create((set, get) => ({
           custoMaterial = price.material_cost
           custoMO = price.labor_cost
           custoTotal = price.total_cost
-        } catch {}
+        } catch (priceErr) {
+          console.warn('calculatePrice failed, submitting without cost estimate:', priceErr.message)
+        }
       }
 
       const result = await api.submitRequest({

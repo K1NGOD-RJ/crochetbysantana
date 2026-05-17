@@ -17,6 +17,8 @@ function parseHourlyRate(hours, valorData) {
       }
     } catch {}
   }
+  // No tier matched — using last row as fallback. DB_VALOR should have a catch-all tier.
+  console.warn(`parseHourlyRate: no tier matched for ${hours}h, falling back to last row.`)
   return parseFloat(valorData[valorData.length - 1]?.VALOR || 0)
 }
 
@@ -93,7 +95,6 @@ export function getColorsForPiece(peca, sheets) {
  * Return true if this piece only comes in one size (TU).
  */
 export function isUniqueSize(peca, sheets) {
-  return sheets.horas.some(
-    (r) => r.PECA?.toUpperCase() === peca.toUpperCase() && r.TAMANHO?.toUpperCase() === 'TU'
-  )
+  const rows = sheets.horas.filter((r) => r.PECA?.toUpperCase() === peca.toUpperCase())
+  return rows.length > 0 && rows.every((r) => r.TAMANHO?.toUpperCase() === 'TU')
 }
