@@ -19,14 +19,12 @@ const PENDING_HEADERS = [
   'CUSTO_TOTAL', 'DATA_SOLICITACAO', 'STATUS',
 ]
 
-const ORDER_HEADERS = [
-  'ID', 'CLIENTE', 'PECA', 'TAMANHO', 'COR', 'REFERENCIA_VISUAL', 'NOTAS',
-  'PRECO_VENDA', 'CUSTO_TOTAL', 'LUCRO', 'PRAZO', 'STATUS', 'CRIADO_EM',
-  'TELEFONE', 'LINHA', 'ROLOS',
-]
-
 function now() {
   return new Date().toISOString().slice(0, 16).replace('T', ' ')
+}
+
+function esc(str) {
+  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
 
 async function notifyOwner(id, body) {
@@ -38,18 +36,18 @@ async function notifyOwner(id, body) {
     await resend.emails.send({
       from: 'CrochetbySantana <onboarding@resend.dev>',
       to: ownerEmail,
-      subject: `[CrochetbySantana] Novo pedido ${id} — ${body.CLIENTE}`,
+      subject: `[CrochetbySantana] Novo pedido ${esc(id)} — ${esc(body.CLIENTE)}`,
       html: `
         <h2>Novo pedido recebido</h2>
         <table>
-          <tr><td><b>ID</b></td><td>${id}</td></tr>
-          <tr><td><b>Cliente</b></td><td>${body.CLIENTE}</td></tr>
-          <tr><td><b>Telefone</b></td><td>${body.TELEFONE}</td></tr>
-          <tr><td><b>Peça</b></td><td>${body.PECA || '—'}</td></tr>
-          <tr><td><b>Tamanho</b></td><td>${body.TAMANHO || '—'}</td></tr>
-          <tr><td><b>Cor</b></td><td>${body.COR || '—'}</td></tr>
-          <tr><td><b>Referência</b></td><td>${body.REFERENCIA_VISUAL || '—'}</td></tr>
-          <tr><td><b>Observações</b></td><td>${body.OBSERVACOES || '—'}</td></tr>
+          <tr><td><b>ID</b></td><td>${esc(id)}</td></tr>
+          <tr><td><b>Cliente</b></td><td>${esc(body.CLIENTE)}</td></tr>
+          <tr><td><b>Telefone</b></td><td>${esc(body.TELEFONE)}</td></tr>
+          <tr><td><b>Peça</b></td><td>${esc(body.PECA) || '—'}</td></tr>
+          <tr><td><b>Tamanho</b></td><td>${esc(body.TAMANHO) || '—'}</td></tr>
+          <tr><td><b>Cor</b></td><td>${esc(body.COR) || '—'}</td></tr>
+          <tr><td><b>Referência</b></td><td>${esc(body.REFERENCIA_VISUAL) || '—'}</td></tr>
+          <tr><td><b>Observações</b></td><td>${esc(body.OBSERVACOES) || '—'}</td></tr>
           <tr><td><b>Data</b></td><td>${now()}</td></tr>
         </table>
         <p>Aceda ao painel para aprovar ou rejeitar o pedido.</p>

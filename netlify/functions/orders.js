@@ -12,6 +12,10 @@ import { getSheetsClient, SHEET_ID, json, toObjects } from './_sheets.js'
 const PEDIDOS_RANGE = 'PEDIDOS!A:Z'
 const VALID_STATUSES = ['Pendente', 'Em progresso', 'Concluída']
 
+function isOwner(event) {
+  return event.headers['x-owner-token'] === process.env.OWNER_PASSWORD
+}
+
 export const handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return json(200, {})
   const sheets = getSheetsClient()
@@ -36,6 +40,7 @@ export const handler = async (event) => {
 
   // ── PATCH: update status ─────────────────────────────────────
   if (event.httpMethod === 'PATCH') {
+    if (!isOwner(event)) return json(401, { error: 'Não autorizado.' })
     let body
     try { body = JSON.parse(event.body) } catch { return json(400, { error: 'Invalid JSON' }) }
     const { id, status } = body
@@ -62,6 +67,7 @@ export const handler = async (event) => {
 
   // ── DELETE ───────────────────────────────────────────────────
   if (event.httpMethod === 'DELETE') {
+    if (!isOwner(event)) return json(401, { error: 'Não autorizado.' })
     let body
     try { body = JSON.parse(event.body) } catch { return json(400, { error: 'Invalid JSON' }) }
     const { id } = body

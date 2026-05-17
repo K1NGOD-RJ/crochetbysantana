@@ -16,6 +16,7 @@ export default function LoginPage() {
     try {
       await ownerLogin(password)
       sessionStorage.setItem('owner_auth', '1')
+      sessionStorage.setItem('owner_token', password)
       navigate('/owner')
     } catch (err) {
       setError(err.message)

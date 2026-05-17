@@ -1,16 +1,21 @@
 /** Fetch wrapper for all Netlify functions */
 const BASE = '/.netlify/functions'
 
-async function call(path, method = 'GET', body = null) {
+async function call(path, method = 'GET', body = null, extraHeaders = {}) {
   const opts = {
     method,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...extraHeaders },
   }
   if (body) opts.body = JSON.stringify(body)
   const res = await fetch(`${BASE}${path}`, opts)
   const data = await res.json()
   if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
   return data
+}
+
+function ownerHeaders() {
+  const token = sessionStorage.getItem('owner_token') || ''
+  return { 'x-owner-token': token }
 }
 
 // ── Sheets (read-only DB data) ────────────────────────────────
@@ -45,10 +50,10 @@ export const getClientOrders = (phone) =>
   call(`/orders?phone=${encodeURIComponent(phone)}`)
 
 export const updateOrderStatus = (id, status) =>
-  call('/orders', 'PATCH', { id, status })
+  call('/orders', 'PATCH', { id, status }, ownerHeaders())
 
 export const deleteOrder = (id) =>
-  call('/orders', 'DELETE', { id })
+  call('/orders', 'DELETE', { id }, ownerHeaders())
 
 // ── Tables ────────────────────────────────────────────────────
 export const getTable = (table) => call(`/tables?table=${table}`)

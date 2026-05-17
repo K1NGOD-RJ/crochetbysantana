@@ -38,22 +38,26 @@ export const handler = async (event) => {
     if (!nome || !telefone || !password) return json(400, { error: 'Campos obrigatórios em falta.' })
 
     const phone = normalizePhone(telefone)
-    const res = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: USUARIOS_RANGE })
-    const users = toObjects(res.data.values)
+    try {
+      const res = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: USUARIOS_RANGE })
+      const users = toObjects(res.data.values)
 
-    if (users.find((u) => normalizePhone(u.TELEFONE) === phone)) {
-      return json(409, { error: 'Este número já está registado.' })
+      if (users.find((u) => normalizePhone(u.TELEFONE) === phone)) {
+        return json(409, { error: 'Este número já está registado.' })
+      }
+
+      const hash = await bcrypt.hash(password, 10)
+      await sheets.spreadsheets.values.append({
+        spreadsheetId: SHEET_ID,
+        range: USUARIOS_RANGE,
+        valueInputOption: 'RAW',
+        requestBody: { values: [[nome.trim(), phone, hash]] },
+      })
+
+      return json(200, { ok: true, user: { nome: nome.trim(), telefone: phone } })
+    } catch (err) {
+      return json(500, { error: 'Erro ao registar. Tente novamente.' })
     }
-
-    const hash = await bcrypt.hash(password, 10)
-    await sheets.spreadsheets.values.append({
-      spreadsheetId: SHEET_ID,
-      range: USUARIOS_RANGE,
-      valueInputOption: 'RAW',
-      requestBody: { values: [[nome.trim(), phone, hash]] },
-    })
-
-    return json(200, { ok: true, user: { nome: nome.trim(), telefone: phone } })
   }
 
   // ── Client login ─────────────────────────────────────────────
@@ -62,16 +66,20 @@ export const handler = async (event) => {
     if (!telefone || !password) return json(400, { error: 'Campos obrigatórios em falta.' })
 
     const phone = normalizePhone(telefone)
-    const res = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: USUARIOS_RANGE })
-    const users = toObjects(res.data.values)
-    const user = users.find((u) => normalizePhone(u.TELEFONE) === phone)
+    try {
+      const res = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: USUARIOS_RANGE })
+      const users = toObjects(res.data.values)
+      const user = users.find((u) => normalizePhone(u.TELEFONE) === phone)
 
-    if (!user) return json(401, { error: 'Número não encontrado.' })
+      if (!user) return json(401, { error: 'Número não encontrado.' })
 
-    const match = await bcrypt.compare(password, user.SENHA || user.PASSWORD || '')
-    if (!match) return json(401, { error: 'Senha incorreta.' })
+      const match = await bcrypt.compare(password, user.SENHA || '')
+      if (!match) return json(401, { error: 'Senha incorreta.' })
 
-    return json(200, { ok: true, user: { nome: user.NOME, telefone: user.TELEFONE } })
+      return json(200, { ok: true, user: { nome: user.NOME, telefone: user.TELEFONE } })
+    } catch (err) {
+      return json(500, { error: 'Erro ao autenticar. Tente novamente.' })
+    }
   }
 
   return json(400, { error: 'Ação inválida.' })
