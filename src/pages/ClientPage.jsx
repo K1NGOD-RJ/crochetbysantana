@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { ShoppingBag, Package, ClipboardList, LogIn, LogOut, ExternalLink, Loader2, CheckCircle, User } from 'lucide-react'
 import { useClientStore } from '../stores/clientStore'
 
@@ -225,6 +225,30 @@ function StatusBadge({ status }) {
   return <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${map[status] || 'bg-gray-100 text-gray-600'}`}>{status}</span>
 }
 
+// ── Test email button ─────────────────────────────────────────
+function TestEmailButton() {
+  const [msg, setMsg] = useState('')
+  const [loading, setLoading] = useState(false)
+  const send = async () => {
+    setLoading(true); setMsg('')
+    try {
+      const res = await fetch('/.netlify/functions/test-email', { method: 'POST' })
+      const data = await res.json()
+      setMsg(data.ok ? '✅ Email enviado!' : `❌ ${data.error}`)
+    } catch (err) { setMsg(`❌ ${err.message}`) }
+    setLoading(false)
+  }
+  return (
+    <div className="fixed bottom-4 right-4 flex flex-col items-end gap-1 z-50">
+      {msg && <span className="text-xs bg-white border border-c-border rounded-lg px-3 py-1 shadow">{msg}</span>}
+      <button onClick={send} disabled={loading}
+        className="bg-amber-400 text-white font-bold px-4 py-2 rounded-xl text-sm shadow hover:bg-amber-500 disabled:opacity-50">
+        {loading ? 'A enviar...' : 'Teste Email'}
+      </button>
+    </div>
+  )
+}
+
 // ── Main page ─────────────────────────────────────────────────
 export default function ClientPage() {
   const { activeTab, setActiveTab, loadSheets, loading, clientLoggedIn, clientUser, clientLogout } = useClientStore()
@@ -275,6 +299,7 @@ export default function ClientPage() {
         )}
         {activeTab === 'history' && <HistoryTab />}
       </main>
+      <TestEmailButton />
     </div>
   )
 }
