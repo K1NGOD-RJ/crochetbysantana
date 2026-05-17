@@ -1,0 +1,84 @@
+/** Fetch wrapper for all Netlify functions */
+const BASE = '/.netlify/functions'
+
+async function call(path, method = 'GET', body = null) {
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+  }
+  if (body) opts.body = JSON.stringify(body)
+  const res = await fetch(`${BASE}${path}`, opts)
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
+  return data
+}
+
+// ── Sheets (read-only DB data) ────────────────────────────────
+export const getSheets = () => call('/sheets')
+
+// ── Auth ──────────────────────────────────────────────────────
+export const ownerLogin = (password) =>
+  call('/auth', 'POST', { action: 'owner-login', password })
+
+export const clientLogin = (telefone, password) =>
+  call('/auth', 'POST', { action: 'client-login', telefone, password })
+
+export const clientRegister = (nome, telefone, password) =>
+  call('/auth', 'POST', { action: 'client-register', nome, telefone, password })
+
+// ── Pending ───────────────────────────────────────────────────
+export const getPending = () => call('/pending')
+
+export const submitRequest = (data) =>
+  call('/pending', 'POST', { action: 'submit', ...data })
+
+export const approveRequest = (data) =>
+  call('/pending', 'POST', { action: 'approve', ...data })
+
+export const rejectRequest = (id) =>
+  call('/pending', 'POST', { action: 'reject', id })
+
+// ── Orders ────────────────────────────────────────────────────
+export const getOrders = () => call('/orders')
+
+export const getClientOrders = (phone) =>
+  call(`/orders?phone=${encodeURIComponent(phone)}`)
+
+export const updateOrderStatus = (id, status) =>
+  call('/orders', 'PATCH', { id, status })
+
+export const deleteOrder = (id) =>
+  call('/orders', 'DELETE', { id })
+
+// ── Tables ────────────────────────────────────────────────────
+export const getTable = (table) => call(`/tables?table=${table}`)
+
+export const addTableRow = (table, fields) =>
+  call(`/tables?table=${table}`, 'POST', fields)
+
+export const editTableRow = (table, _idx, fields) =>
+  call(`/tables?table=${table}`, 'PUT', { _idx, ...fields })
+
+export const deleteTableRow = (table, _idx) =>
+  call(`/tables?table=${table}`, 'DELETE', { _idx })
+
+// ── Stock ─────────────────────────────────────────────────────
+export const getStock = () => call('/stock')
+
+export const addCompra = (data) =>
+  call('/stock', 'POST', { action: 'compra', ...data })
+
+export const addConsumo = (data) =>
+  call('/stock', 'POST', { action: 'consumo', ...data })
+
+export const deleteStockRecord = (table, id) =>
+  call('/stock', 'DELETE', { table, id })
+
+// ── Pieces ────────────────────────────────────────────────────
+export const registerPiece = (data) => call('/pieces', 'POST', data)
+
+// ── Medidas (client measurements) ────────────────────────────
+export const getMedidas = (telefone) =>
+  call(`/medidas?telefone=${encodeURIComponent(telefone)}`)
+
+export const saveMedidas = (data) => call('/medidas', 'POST', data)
