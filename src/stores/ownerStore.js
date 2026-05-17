@@ -267,7 +267,7 @@ export const useOwnerStore = create((set, get) => ({
     const row = tableViewData.find((r) => r._idx === idx)
     if (!row) return
     let f1 = '', f2 = '', f3 = ''
-    if (tabelasSubtab === 'catalogo') { f1 = row.NOME || ''; f2 = row.DESCRICAO || ''; f3 = row.URL_FOTO || '' }
+    if (tabelasSubtab === 'catalogo') { f1 = row.NOME || ''; f2 = row.DESCRICAO || ''; f3 = row.URL_FOTOS || '' }
     else if (tabelasSubtab === 'linhas') { f1 = row.LINHAS || ''; f2 = row.VALOR || '' }
     else if (tabelasSubtab === 'cores') { f1 = row.LINHA || ''; f2 = row.COR || '' }
     set({ tableEditIdx: idx, tableEditF1: f1, tableEditF2: f2, tableEditF3: f3, tableMsg: '' })
@@ -279,7 +279,7 @@ export const useOwnerStore = create((set, get) => ({
     const { tabelasSubtab, tableEditIdx, tableEditF1, tableEditF2, tableEditF3 } = get()
     if (!tableEditF1.trim()) { set({ tableMsg: 'O primeiro campo não pode estar vazio.' }); return }
     let fields = {}
-    if (tabelasSubtab === 'catalogo') fields = { NOME: tableEditF1, DESCRICAO: tableEditF2, URL_FOTO: tableEditF3 }
+    if (tabelasSubtab === 'catalogo') fields = { NOME: tableEditF1, DESCRICAO: tableEditF2, URL_FOTOS: tableEditF3 }
     else if (tabelasSubtab === 'linhas') fields = { LINHAS: tableEditF1, VALOR: tableEditF2 }
     else if (tabelasSubtab === 'cores') fields = { LINHA: tableEditF1, COR: tableEditF2 }
     try {
@@ -295,7 +295,7 @@ export const useOwnerStore = create((set, get) => ({
     const { catNomeInput, catDescInput, catFotoInput } = get()
     if (!catNomeInput.trim()) { set({ tableMsg: 'Nome é obrigatório.' }); return }
     try {
-      await api.addTableRow('catalogo', { NOME: catNomeInput, DESCRICAO: catDescInput, URL_FOTO: catFotoInput })
+      await api.addTableRow('catalogo', { NOME: catNomeInput, DESCRICAO: catDescInput, URL_FOTOS: catFotoInput })
       set({ catNomeInput: '', catDescInput: '', catFotoInput: '', tableMsg: '✅ Peça adicionada.' })
       get().loadTableView()
     } catch (err) { set({ tableMsg: err.message }) }

@@ -44,12 +44,12 @@ export const handler = async (event) => {
       const existing = res.data.values || []
       let newRow
       if (table === 'catalogo') {
-        newRow = [body.NOME || '', body.DESCRICAO || '', body.URL_FOTO || '']
+        newRow = [body.NOME || '', body.DESCRICAO || '', body.URL_FOTOS || '']
         if (existing.length === 0) {
           await sheets.spreadsheets.values.update({
             spreadsheetId: SHEET_ID, range,
             valueInputOption: 'RAW',
-            requestBody: { values: [['NOME', 'DESCRICAO', 'URL_FOTO']] },
+            requestBody: { values: [['NOME', 'DESCRICAO', 'URL_FOTOS']] },
           })
         }
       } else if (table === 'linhas') {

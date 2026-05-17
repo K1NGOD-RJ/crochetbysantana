@@ -293,7 +293,7 @@ function TableEditor() {
                     {isCatalog && <>
                       <td className="px-3 py-2 font-semibold text-dark">{row.NOME}</td>
                       <td className="px-3 py-2 text-primary">{row.DESCRICAO}</td>
-                      <td className="px-3 py-2">{row.URL_FOTO ? <a href={row.URL_FOTO} target="_blank" rel="noopener noreferrer" className="text-primary text-xs flex items-center gap-1 hover:underline"><ExternalLink size={12} />Ver foto</a> : <span className="text-c-border">—</span>}</td>
+                      <td className="px-3 py-2">{row.URL_FOTOS ? <a href={row.URL_FOTOS} target="_blank" rel="noopener noreferrer" className="text-primary text-xs flex items-center gap-1 hover:underline"><ExternalLink size={12} />Ver foto</a> : <span className="text-c-border">—</span>}</td>
                     </>}
                     {isLinhas && <>
                       <td className="px-3 py-2 font-semibold text-dark">{row.LINHAS}</td>

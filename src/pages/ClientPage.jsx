@@ -31,14 +31,18 @@ function CatalogTab() {
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
       {catalog.map((item, i) => (
         <div key={i} className="bg-white rounded-2xl border border-c-border p-4 shadow-sm hover:shadow-md transition-shadow">
-          {item.URL_FOTO && (
-            <a href={item.URL_FOTO} target="_blank" rel="noopener noreferrer" className="block mb-3">
-              <div className="w-full h-40 bg-lavender rounded-xl flex items-center justify-center overflow-hidden">
-                <img src={item.URL_FOTO} alt={item.NOME} className="object-cover w-full h-full rounded-xl" onError={(e) => { e.target.style.display = 'none' }} />
-              </div>
-            </a>
-          )}
-          {!item.URL_FOTO && <div className="w-full h-40 bg-lavender rounded-xl flex items-center justify-center mb-3"><Package size={32} className="text-c-border" /></div>}
+          {(() => {
+            const firstUrl = (item.URL_FOTOS || '').split(',').map((s) => s.trim()).find(Boolean)
+            return firstUrl ? (
+              <a href={firstUrl} target="_blank" rel="noopener noreferrer" className="block mb-3">
+                <div className="w-full h-40 bg-lavender rounded-xl flex items-center justify-center overflow-hidden">
+                  <img src={firstUrl} alt={item.NOME} className="object-cover w-full h-full rounded-xl" onError={(e) => { e.target.style.display = 'none' }} />
+                </div>
+              </a>
+            ) : (
+              <div className="w-full h-40 bg-lavender rounded-xl flex items-center justify-center mb-3"><Package size={32} className="text-c-border" /></div>
+            )
+          })()}
           <h3 className="font-bold text-dark text-sm">{item.NOME}</h3>
           <p className="text-primary text-xs mt-0.5">{item.DESCRICAO}</p>
           <button
