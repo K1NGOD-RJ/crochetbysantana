@@ -28,6 +28,11 @@ export function toObjects(values) {
   )
 }
 
+/** Check that the request carries a valid owner token */
+export function isOwner(event) {
+  return event.headers['x-owner-token'] === process.env.OWNER_PASSWORD
+}
+
 /** Convert array of objects back to 2D values array (header + rows) */
 export function fromObjects(objects) {
   if (!objects.length) return []
