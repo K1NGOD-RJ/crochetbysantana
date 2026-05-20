@@ -72,7 +72,8 @@ function nextId(rows, prefix = '') {
 
 export const handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return json(200, {})
-  const sheets = getSheetsClient()
+  let sheets
+  try { sheets = getSheetsClient() } catch (err) { return json(500, { error: `Sheets init: ${err.message}` }) }
 
   // ── GET: list pending (Aguardando) ──────────────────────────
   if (event.httpMethod === 'GET') {

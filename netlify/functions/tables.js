@@ -22,7 +22,8 @@ export const handler = async (event) => {
   if (!sheetName) return json(400, { error: `table param must be one of: ${Object.keys(TABLE_MAP).join(', ')}` })
 
   const range = `${sheetName}!A:Z`
-  const sheets = getSheetsClient()
+  let sheets
+  try { sheets = getSheetsClient() } catch (err) { return json(500, { error: `Sheets init: ${err.message}` }) }
 
   // ── GET ──────────────────────────────────────────────────────
   if (event.httpMethod === 'GET') {
